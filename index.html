@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>理想の暮らし発見ワーク</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    padding: 24px 16px 60px;
+    padding: 24px 16px 90px;
     background: #FBEAF0;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
     color: #2C2C2A;
@@ -38,26 +38,36 @@
     margin: 0 0 10px;
   }
   .desc { font-size: 14px; color: #5F5E5A; margin: 0 0 16px; line-height: 1.6; }
-  label { font-size: 14px; display: block; margin-bottom: 6px; color: #2C2C2A; font-weight: 500; }
+  label {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 6px;
+    color: #2C2C2A;
+    font-weight: 500;
+    cursor: text;
+  }
   textarea, input[type=text] {
     width: 100%;
     border: 1px solid #ED93B188;
     border-radius: 8px;
     background: #FFFFFF;
-    padding: 10px 12px;
-    font-size: 15px;
+    padding: 12px 12px;
+    font-size: 16px;          /* 16px以上でiOSの自動ズームを防止 */
     font-family: inherit;
     color: #2C2C2A;
     resize: none;
     overflow: hidden;
-    line-height: 1.6;
+    line-height: 1.7;
+    scroll-margin-top: 90px;  /* フォーカス時にキーボードへ隠れないように余白を確保 */
+    -webkit-appearance: none;
+    touch-action: manipulation;
   }
   textarea:focus, input[type=text]:focus {
     outline: none;
     border-color: #D4537E;
-    box-shadow: 0 0 0 2px #ED93B144;
+    box-shadow: 0 0 0 3px #ED93B144;
   }
-  .field { margin-bottom: 14px; }
+  .field { margin-bottom: 16px; }
   .field:last-child { margin-bottom: 0; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
@@ -66,19 +76,55 @@
   }
   .nameDate { display: flex; gap: 12px; margin-bottom: 24px; }
   .nameDate > div { flex: 1; }
-  .actions { display: flex; justify-content: center; margin-top: 24px; }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
   button {
     background: #FFFFFF;
     border: 1px solid #B4B2A9;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 14px;
+    border-radius: 10px;
+    padding: 13px 20px;
+    font-size: 15px;
     color: #444441;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 46px;
   }
   button:hover { background: #F1EFE8; }
   button:active { transform: scale(0.98); }
-  .footnote { text-align: center; font-size: 12px; color: #888780; margin-top: 28px; }
+  #send-btn {
+    background: #D4537E;
+    border-color: #D4537E;
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+  #send-btn:hover { background: #C24470; }
+  #send-btn[disabled] { opacity: 0.6; cursor: default; }
+
+  .footnote { text-align: center; font-size: 12px; color: #888780; margin-top: 28px; line-height: 1.7; }
+
+  #print-area { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-area, #print-area * { visibility: visible; }
+    #print-area {
+      display: block;
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+    #print-area h1 { font-size: 18px; margin: 0 0 16px; }
+    #print-area .pq { font-size: 12px; color: #555; margin: 14px 0 2px; font-weight: 600; }
+    #print-area .pa { font-size: 13px; margin: 0 0 4px; white-space: pre-wrap; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+  }
 </style>
 </head>
 <body>
@@ -92,12 +138,12 @@
 
   <div class="nameDate">
     <div>
-      <label>お名前</label>
-      <input type="text" data-key="name">
+      <label for="f-name">お名前</label>
+      <input type="text" id="f-name" data-key="name" autocomplete="off">
     </div>
     <div>
-      <label>記入日</label>
-      <input type="text" data-key="date">
+      <label for="f-date">記入日</label>
+      <input type="text" id="f-date" data-key="date" autocomplete="off">
     </div>
   </div>
 
@@ -110,86 +156,95 @@
     <h2>理想の家を想像する</h2>
     <p class="desc">もしお金も時間も、何の制限もなかったら……どんな家に住みたいですか？</p>
     <div class="row2">
-      <div class="field"><label>どんな場所に住みたい？</label><textarea data-key="home_q1" rows="3"></textarea></div>
-      <div class="field"><label>どんな雰囲気の家？</label><textarea data-key="home_q2" rows="3"></textarea></div>
+      <div class="field"><label for="home_q1">どんな場所に住みたい？</label><textarea id="home_q1" data-key="home_q1" rows="3"></textarea></div>
+      <div class="field"><label for="home_q2">どんな雰囲気の家？</label><textarea id="home_q2" data-key="home_q2" rows="3"></textarea></div>
     </div>
     <div class="row2">
-      <div class="field"><label>どんな広さ・間取り？</label><textarea data-key="home_q3" rows="3"></textarea></div>
-      <div class="field"><label>家の外観・素材のイメージ</label><textarea data-key="home_q4" rows="3"></textarea></div>
+      <div class="field"><label for="home_q3">どんな広さ・間取り？</label><textarea id="home_q3" data-key="home_q3" rows="3"></textarea></div>
+      <div class="field"><label for="home_q4">家の外観・素材のイメージ</label><textarea id="home_q4" data-key="home_q4" rows="3"></textarea></div>
     </div>
-    <div class="field"><label>その家で、どんな気分で毎日を過ごしていますか？</label><textarea data-key="home_q5" rows="3"></textarea></div>
+    <div class="field"><label for="home_q5">その家で、どんな気分で毎日を過ごしていますか？</label><textarea id="home_q5" data-key="home_q5" rows="3"></textarea></div>
   </section>
 
   <section>
     <h2>理想の空間を想像する</h2>
     <p class="desc">部屋ごとに、理想のイメージを描いてみましょう</p>
-    <div class="field"><label>リビング・ダイニング — 家族が集まる場所。どんな雰囲気？</label><textarea data-key="room_living" rows="3"></textarea></div>
-    <div class="field"><label>寝室 — 眠りにつくとき、どんな空間にいたい？</label><textarea data-key="room_bed" rows="3"></textarea></div>
-    <div class="field"><label>自分だけのスペース — 自分だけの時間を過ごす場所。どんなことをする？</label><textarea data-key="room_self" rows="3"></textarea></div>
-    <div class="field"><label>子どもたちのスペース — 子どもにとって心地よい場所は？</label><textarea data-key="room_kids" rows="3"></textarea></div>
+    <div class="field"><label for="room_living">リビング・ダイニング — 家族が集まる場所。どんな雰囲気？</label><textarea id="room_living" data-key="room_living" rows="3"></textarea></div>
+    <div class="field"><label for="room_bed">寝室 — 眠りにつくとき、どんな空間にいたい？</label><textarea id="room_bed" data-key="room_bed" rows="3"></textarea></div>
+    <div class="field"><label for="room_self">自分だけのスペース — 自分だけの時間を過ごす場所。どんなことをする？</label><textarea id="room_self" data-key="room_self" rows="3"></textarea></div>
+    <div class="field"><label for="room_kids">子どもたちのスペース — 子どもにとって心地よい場所は？</label><textarea id="room_kids" data-key="room_kids" rows="3"></textarea></div>
   </section>
 
   <section>
     <h2>五感を使って描く</h2>
     <p class="desc">理想の暮らしの中にいる自分をイメージして、五感で感じてみましょう</p>
-    <div class="field"><label>目に見える景色は？ 窓から見える景色、部屋の中の景色…</label><textarea data-key="sense_sight" rows="2"></textarea></div>
-    <div class="field"><label>聞こえる音は？ 音楽、自然の音、家族の声…</label><textarea data-key="sense_sound" rows="2"></textarea></div>
-    <div class="field"><label>漂っている香りは？ コーヒー、花、木、お気に入りの香り…</label><textarea data-key="sense_smell" rows="2"></textarea></div>
-    <div class="field"><label>肌で感じる温度・感覚は？ 陽当たり、風、やわらかいもの…</label><textarea data-key="sense_touch" rows="2"></textarea></div>
-    <div class="field"><label>どんな気分？ 穏やか、自由、満たされた、わくわく…</label><textarea data-key="sense_feeling" rows="2"></textarea></div>
+    <div class="field"><label for="sense_sight">目に見える景色は？ 窓から見える景色、部屋の中の景色…</label><textarea id="sense_sight" data-key="sense_sight" rows="2"></textarea></div>
+    <div class="field"><label for="sense_sound">聞こえる音は？ 音楽、自然の音、家族の声…</label><textarea id="sense_sound" data-key="sense_sound" rows="2"></textarea></div>
+    <div class="field"><label for="sense_smell">漂っている香りは？ コーヒー、花、木、お気に入りの香り…</label><textarea id="sense_smell" data-key="sense_smell" rows="2"></textarea></div>
+    <div class="field"><label for="sense_touch">肌で感じる温度・感覚は？ 陽当たり、風、やわらかいもの…</label><textarea id="sense_touch" data-key="sense_touch" rows="2"></textarea></div>
+    <div class="field"><label for="sense_feeling">どんな気分？ 穏やか、自由、満たされた、わくわく…</label><textarea id="sense_feeling" data-key="sense_feeling" rows="2"></textarea></div>
   </section>
 
   <section>
     <h2>理想の1日を描く</h2>
     <p class="desc">朝目覚めてから夜眠りにつくまで、1日の流れを想像してみましょう</p>
     <div class="row3">
-      <div class="field"><label>朝 — 起きた時の気分は？何をしている？どんな朝ご飯を食べている？</label><textarea data-key="day_morning" rows="6"></textarea></div>
-      <div class="field"><label>昼 — どんなふうに時間を使っている？どこにいる？誰といる？</label><textarea data-key="day_noon" rows="6"></textarea></div>
-      <div class="field"><label>夜 — 1日の終わりを、どんなふうに過ごしている？どんな気持ちで眠りにつく？</label><textarea data-key="day_night" rows="6"></textarea></div>
+      <div class="field"><label for="day_morning">朝 — 起きた時の気分は？何をしている？どんな朝ご飯を食べている？</label><textarea id="day_morning" data-key="day_morning" rows="6"></textarea></div>
+      <div class="field"><label for="day_noon">昼 — どんなふうに時間を使っている？どこにいる？誰といる？</label><textarea id="day_noon" data-key="day_noon" rows="6"></textarea></div>
+      <div class="field"><label for="day_night">夜 — 1日の終わりを、どんなふうに過ごしている？どんな気持ちで眠りにつく？</label><textarea id="day_night" data-key="day_night" rows="6"></textarea></div>
     </div>
   </section>
 
   <section>
     <h2>なぜそれを望むのか</h2>
     <p class="desc">「なぜ？」を5回繰り返すことで、あなたの本当の想いが見えてきます</p>
-    <div class="field"><label>私が望む理想の暮らし</label><textarea data-key="why_ideal" rows="2"></textarea></div>
-    <div class="field"><label>なぜ？（1回目）</label><textarea data-key="why_1" rows="2"></textarea></div>
-    <div class="field"><label>なぜ？（2回目）</label><textarea data-key="why_2" rows="2"></textarea></div>
-    <div class="field"><label>なぜ？（3回目）</label><textarea data-key="why_3" rows="2"></textarea></div>
-    <div class="field"><label>なぜ？（4回目）</label><textarea data-key="why_4" rows="2"></textarea></div>
-    <div class="field"><label>なぜ？（5回目）</label><textarea data-key="why_5" rows="2"></textarea></div>
-    <div class="field"><label>5回深掘りしてみて、気づいたことや感じたことは？</label><textarea data-key="why_insight" rows="3"></textarea></div>
+    <div class="field"><label for="why_ideal">私が望む理想の暮らし</label><textarea id="why_ideal" data-key="why_ideal" rows="2"></textarea></div>
+    <div class="field"><label for="why_1">なぜ？（1回目）</label><textarea id="why_1" data-key="why_1" rows="2"></textarea></div>
+    <div class="field"><label for="why_2">なぜ？（2回目）</label><textarea id="why_2" data-key="why_2" rows="2"></textarea></div>
+    <div class="field"><label for="why_3">なぜ？（3回目）</label><textarea id="why_3" data-key="why_3" rows="2"></textarea></div>
+    <div class="field"><label for="why_4">なぜ？（4回目）</label><textarea id="why_4" data-key="why_4" rows="2"></textarea></div>
+    <div class="field"><label for="why_5">なぜ？（5回目）</label><textarea id="why_5" data-key="why_5" rows="2"></textarea></div>
+    <div class="field"><label for="why_insight">5回深掘りしてみて、気づいたことや感じたことは？</label><textarea id="why_insight" data-key="why_insight" rows="3"></textarea></div>
   </section>
 
   <section>
     <h2>理想の暮らしを一言で表現する</h2>
     <p class="desc">キャッチコピーでも、感情の言葉でも、なんでも大丈夫です。</p>
     <div class="field">
-      <label>私の理想の暮らしは…</label>
-      <textarea data-key="one_phrase" rows="2" placeholder="例：いつでも人を呼べるお家。家族みんなが笑顔のお家。ほっこり。リラックス。"></textarea>
+      <label for="one_phrase">私の理想の暮らしは…</label>
+      <textarea id="one_phrase" data-key="one_phrase" rows="2" placeholder="例：いつでも人を呼べるお家。家族みんなが笑顔のお家。ほっこり。リラックス。"></textarea>
     </div>
   </section>
 
   <section>
     <h2>片づけを終えたら叶えたいこと</h2>
     <p class="desc">理想の暮らしが手に入ったら、あなたはどんなことを楽しみたいですか？</p>
-    <div class="field"><label>自分のための時間に、やってみたいことは？</label><textarea data-key="reward_self" rows="3"></textarea></div>
-    <div class="field"><label>大切な人と、どんな時間を過ごしたい？</label><textarea data-key="reward_loved" rows="3"></textarea></div>
-    <div class="field"><label>この暮らしを手に入れた私は、どんな表情をしている？</label><textarea data-key="reward_face" rows="3"></textarea></div>
+    <div class="field"><label for="reward_self">自分のための時間に、やってみたいことは？</label><textarea id="reward_self" data-key="reward_self" rows="3"></textarea></div>
+    <div class="field"><label for="reward_loved">大切な人と、どんな時間を過ごしたい？</label><textarea id="reward_loved" data-key="reward_loved" rows="3"></textarea></div>
+    <div class="field"><label for="reward_face">この暮らしを手に入れた私は、どんな表情をしている？</label><textarea id="reward_face" data-key="reward_face" rows="3"></textarea></div>
   </section>
 
-  <div class="actions" style="gap:10px;">
-    <button id="export-btn">記入内容をダウンロード</button>
+  <div class="actions">
+    <button id="export-btn">自分用に保存する</button>
+    <button id="send-btn">めぐみに送信</button>
     <button id="reset-btn">すべて消去</button>
   </div>
 
-  <p class="footnote">記入が終わったら「記入内容をダウンロード」を押すと、テキストファイルが保存されます。そのファイルをLINEやメールで送ってもらえば、相手の回答を受け取れます。</p>
+  <p class="footnote">入力内容は、ご自身で保存することも、めぐみに送信することもできます。ご希望の方法をお選びください。</p>
 
 </div>
+
+<!-- 印刷（PDF保存）用のレイアウト。画面には表示されず、印刷時のみ表示されます -->
+<div id="print-area"></div>
 
 <script>
 (function(){
   var STORAGE_PREFIX = "ideal_life_worksheet:";
+
+  // ▼▼▼ Googleスプレッドシートへ送信する場合は、ここにWebアプリのURLを貼り付けてください ▼▼▼
+  var GAS_WEBAPP_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+  // ▲▲▲ 設定方法は README をご覧ください ▲▲▲
+
   var fields = document.querySelectorAll("[data-key]");
   var indicator = document.getElementById("save-indicator");
 
@@ -212,10 +267,12 @@
   }
 
   var indicatorTimer = null;
-  function showSaved(){
-    indicator.textContent = "保存しました";
+  function showMessage(text, persist){
+    indicator.textContent = text;
     clearTimeout(indicatorTimer);
-    indicatorTimer = setTimeout(function(){ indicator.textContent = ""; }, 1500);
+    if(!persist){
+      indicatorTimer = setTimeout(function(){ indicator.textContent = ""; }, 2000);
+    }
   }
 
   function saveField(el){
@@ -223,9 +280,9 @@
     el._debounce = setTimeout(function(){
       try{
         localStorage.setItem(STORAGE_PREFIX + el.dataset.key, el.value);
-        showSaved();
+        showMessage("保存しました");
       }catch(e){
-        indicator.textContent = "保存に失敗しました。もう一度お試しください";
+        showMessage("保存に失敗しました。もう一度お試しください");
       }
     }, 400);
   }
@@ -234,30 +291,64 @@
     el.addEventListener("input", function(){ autoResize(el); saveField(el); });
   });
 
-  document.getElementById("export-btn").addEventListener("click", function(){
-    var lines = [];
-    lines.push("理想の暮らし発見ワーク");
-    lines.push("========================");
-    lines.push("");
+  function getLabelText(el){
+    var parent = el.parentElement;
+    var labelEl = parent ? parent.querySelector("label") : null;
+    return labelEl ? labelEl.textContent.trim() : el.dataset.key;
+  }
+
+  function collectData(){
+    var data = {};
     fields.forEach(function(el){
-      var parent = el.parentElement;
-      var labelEl = parent ? parent.querySelector("label") : null;
-      var labelText = labelEl ? labelEl.textContent.trim() : el.dataset.key;
-      lines.push("【" + labelText + "】");
-      lines.push(el.value && el.value.trim() ? el.value : "（未記入）");
-      lines.push("");
+      data[el.dataset.key] = el.value || "";
     });
-    var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    var nameVal = (document.querySelector('[data-key="name"]').value || "").trim();
-    var fileName = "理想の暮らし発見ワーク" + (nameVal ? "_" + nameVal : "") + ".txt";
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    return data;
+  }
+
+  // ① 自分用に保存する（PDFとして保存：印刷ダイアログの「PDFに保存」を利用）
+  document.getElementById("export-btn").addEventListener("click", function(){
+    var printArea = document.getElementById("print-area");
+    var nameVal = (document.getElementById("f-name").value || "").trim();
+    var dateVal = (document.getElementById("f-date").value || "").trim();
+    var html = "<h1>理想の暮らし発見ワーク" + (nameVal ? "　" + nameVal + " 様" : "") + "</h1>";
+    if(dateVal){ html += "<p style='font-size:12px;color:#666;'>記入日：" + dateVal + "</p>"; }
+    fields.forEach(function(el){
+      if(el.dataset.key === "name" || el.dataset.key === "date") return;
+      html += "<p class='pq'>" + getLabelText(el) + "</p>";
+      html += "<p class='pa'>" + (el.value && el.value.trim() ? el.value.replace(/</g,"&lt;") : "（未記入）") + "</p>";
+    });
+    printArea.innerHTML = html;
+    showMessage("保存の画面を開いています…", true);
+    setTimeout(function(){
+      window.print();
+      showMessage("");
+    }, 100);
+  });
+
+  // ② めぐみに送信（Googleスプレッドシートへ送信）
+  document.getElementById("send-btn").addEventListener("click", function(){
+    if(!GAS_WEBAPP_URL || GAS_WEBAPP_URL.indexOf("PASTE_YOUR") === 0){
+      showMessage("送信先が未設定です。管理者にお問い合わせください", true);
+      return;
+    }
+    var btn = document.getElementById("send-btn");
+    btn.disabled = true;
+    showMessage("送信しています…", true);
+
+    var data = collectData();
+    data["_送信日時"] = new Date().toISOString();
+
+    fetch(GAS_WEBAPP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(data)
+    }).then(function(){
+      showMessage("送信しました。ありがとうございます！");
+    }).catch(function(){
+      showMessage("送信に失敗しました。通信環境をご確認のうえ、もう一度お試しください", true);
+    }).finally(function(){
+      btn.disabled = false;
+    });
   });
 
   document.getElementById("reset-btn").addEventListener("click", function(){
@@ -270,6 +361,7 @@
   });
 
   loadAll();
+  fields.forEach(autoResize);
 })();
 </script>
 </body>
