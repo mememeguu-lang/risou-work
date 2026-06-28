@@ -109,6 +109,58 @@
 
   .footnote { text-align: center; font-size: 12px; color: #888780; margin-top: 28px; line-height: 1.7; }
 
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(43, 21, 30, 0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 28px 24px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    animation: modalPop 0.2s ease-out;
+  }
+  @keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #E8F3DE;
+    color: #3B6D11;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: #4B1528; margin: 0 0 8px; }
+  .modal-text { font-size: 14px; color: #5F5E5A; margin: 0 0 20px; line-height: 1.6; }
+  .modal-close {
+    background: #D4537E;
+    border: none;
+    color: #FFFFFF;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 11px 28px;
+    font-size: 14px;
+    cursor: pointer;
+    min-height: 42px;
+  }
+  .modal-close:hover { background: #C24470; }
+
   #print-area { display: none; }
   @media print {
     body * { visibility: hidden; }
@@ -237,6 +289,16 @@
 <!-- 印刷（PDF保存）用のレイアウト。画面には表示されず、印刷時のみ表示されます -->
 <div id="print-area"></div>
 
+<!-- 送信完了ポップアップ -->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon">✓</div>
+    <p class="modal-title">送信が完了しました</p>
+    <p class="modal-text">ありがとうございました。回答は無事にめぐみへ届きました。</p>
+    <button class="modal-close" id="modal-close-btn">閉じる</button>
+  </div>
+</div>
+
 <script>
 (function(){
   var STORAGE_PREFIX = "ideal_life_worksheet:";
@@ -325,6 +387,17 @@
     }, 100);
   });
 
+  var modalOverlay = document.getElementById("modal-overlay");
+  function showSuccessModal(){
+    modalOverlay.classList.add("show");
+  }
+  document.getElementById("modal-close-btn").addEventListener("click", function(){
+    modalOverlay.classList.remove("show");
+  });
+  modalOverlay.addEventListener("click", function(e){
+    if(e.target === modalOverlay) modalOverlay.classList.remove("show");
+  });
+
   // ② めぐみに送信（Googleスプレッドシートへ送信）
   document.getElementById("send-btn").addEventListener("click", function(){
     if(!GAS_WEBAPP_URL || GAS_WEBAPP_URL.indexOf("PASTE_YOUR") === 0){
@@ -344,6 +417,7 @@
       body: JSON.stringify(data)
     }).then(function(){
       showMessage("送信しました。ありがとうございます！");
+      showSuccessModal();
     }).catch(function(){
       showMessage("送信に失敗しました。通信環境をご確認のうえ、もう一度お試しください", true);
     }).finally(function(){
